@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Alongside",
-  description: "A local wellbeing and reflection copilot demo.",
+  description: "A quieter space to think, plan, and remember what helps.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

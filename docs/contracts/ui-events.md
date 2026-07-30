@@ -1,20 +1,20 @@
 # Client event contract
 
-Product-owned event names used by components and analytics/debug trace.
+Product-owned event names for UI/debug instrumentation. Event payloads must never include transcript text, raw journal content, memory statements, or API secrets.
 
-## Voice
+## Call
 
-- `voice.permission_requested`
-- `voice.permission_granted`
-- `voice.permission_denied`
-- `voice.session_started`
-- `voice.session_connected`
-- `voice.agent_listening`
-- `voice.agent_speaking`
-- `voice.session_ended`
-- `voice.session_failed`
+- `call.permission_requested`
+- `call.permission_granted`
+- `call.permission_unavailable`
+- `call.turn_recording_started`
+- `call.turn_recording_stopped`
+- `call.turn_transcribing`
+- `call.turn_responded`
+- `call.ended`
+- `call.failed`
 
-## Journal and memory
+## Reflection and memory
 
 - `journal.opened`
 - `journal.edited`
@@ -26,20 +26,12 @@ Product-owned event names used by components and analytics/debug trace.
 - `memory.rejected`
 - `memory.forgotten`
 
-## Graph
+## Graph and check-ins
 
 - `graph.view_changed`
 - `graph.node_selected`
 - `graph.evidence_opened`
 - `graph.query_submitted`
 - `graph.query_abstained`
-
-## Support/check-in
-
-- `support.mode_selected`
-- `support.rationale_opened`
-- `intervention.feedback_submitted`
 - `checkin.decision_viewed`
 - `checkin.paused`
-
-Events must not include transcript text, raw journal content, sensitive memory statements, or API secrets.

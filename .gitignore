@@ -1,17 +1,12 @@
-# Local secrets
-.env
-.env.local
-.env.*.local
-
-# Local runtime data
+node_modules/
+.next/
+coverage/
+*.tsbuildinfo
+.env*
+!.env.example
 data/*.db
 data/*.db-*
 data/audio/
 data/**/*.mp3
 data/temporal-graph.json
-
-# Inspection/build scratch files
 tmp/
-.next/
-node_modules/
-*.tsbuildinfo
