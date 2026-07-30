@@ -1,0 +1,47 @@
+{
+  "voiceTokenResponse": {
+    "data": {
+      "sessionId": "ses_demo_02",
+      "conversationToken": "demo-token",
+      "dynamicVariables": {
+        "session_id": "ses_demo_02",
+        "memory_context_id": "ctx_demo"
+      }
+    },
+    "error": null
+  },
+  "journal": {
+    "id": "journal_demo_02",
+    "sessionId": "ses_demo_02",
+    "title": "Preparing for tomorrow's appointment",
+    "summary": "You wanted practical help rather than a deep emotional conversation. We prepared three questions for tomorrow.",
+    "importantMoments": [
+      "Tomorrow's appointment is at 10:30"
+    ],
+    "whatHelped": [
+      "Making a short question list"
+    ],
+    "whatDidNotHelp": [],
+    "decisions": [
+      "Use the saved playlist during the journey"
+    ],
+    "nextSteps": [
+      "Put the questions in phone notes"
+    ],
+    "upcomingMoments": [
+      "Medical appointment tomorrow at 10:30"
+    ],
+    "candidateMemories": [],
+    "userEdited": false,
+    "updatedAt": "2026-07-30T18:20:00+01:00"
+  },
+  "checkInDecision": {
+    "decision": "NO_ACTION",
+    "reasonCode": "USER_REQUESTED_SPACE",
+    "reason": "The user disabled morning check-ins in the previous session.",
+    "earliestAllowedAt": "2026-07-31T13:00:00+01:00",
+    "evidenceIds": [
+      "boundary_demo_01"
+    ]
+  }
+}

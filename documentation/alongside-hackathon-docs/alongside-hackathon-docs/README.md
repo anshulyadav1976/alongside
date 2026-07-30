@@ -73,25 +73,9 @@ Voice call
 
 ## Technology decision
 
-The hackathon implementation is a single **Next.js App Router + TypeScript** repository with server Route Handlers, local SQLite, browser audio capture, GPT-5.4 Mini for agent reasoning and structured post-call processing, and ElevenLabs Text-to-Speech for spoken replies. The graph is a JSON projection generated from SQLite records. There is no authentication in the local demo.
+The documented default is a single **Next.js App Router + TypeScript** repository with server Route Handlers, Supabase Postgres/pgvector, ElevenLabs Agents for realtime voice, and OpenAI for canonical transcription and structured post-call processing.
 
 The model identifiers are environment-configured. Do not scatter model names through application code.
-
-## Run locally
-
-```bash
-npm install
-npm run dev
-```
-
-The local demo uses `DATABASE_PATH=./data/alongside.db`. Keep provider keys in `.env.local`; it is ignored by Git. The backend remains usable without provider keys through deterministic demo fallbacks.
-
-```bash
-npm run typecheck
-npm run lint
-npm test
-npm run build
-```
 
 ## Product boundary
 
