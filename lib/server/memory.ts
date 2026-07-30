@@ -45,7 +45,7 @@ export function graphProjection(db: DatabaseSync, userId: string, view: "current
     view,
     generatedAt: now(),
     nodes: [
-      ...memories.map((memory) => ({ id: memory.id, type: memory.type, label: memory.statement, status: view === "current" ? "confirmed" : memory.status, sensitivity: memory.sensitivity, validFrom: memory.validFrom, validTo: memory.validTo, evidenceIds: [memory.sourceTurnId ?? memory.sourceSessionId] })),
+      ...memories.map((memory) => ({ id: memory.id, type: memory.type, label: memory.statement, status: view === "current" ? "confirmed" : memory.status, sensitivity: memory.sensitivity, validFrom: memory.validFrom, validTo: memory.validTo, evidenceIds: [memory.sourceTurnId ?? memory.sourceSessionId], sourceQuote: memory.sourceQuote, sourceSessionId: memory.sourceSessionId })),
       ...entities.map((entity) => ({ id: String(entity.id), type: String(entity.entity_type), label: String(entity.label), status: view === "current" ? "confirmed" : "historical", sensitivity: "low", evidenceIds: entity.source_memory_id ? [String(entity.source_memory_id)] : [], metadata: parse(entity.attributes_json) })),
     ],
     edges: relations.map((relation) => ({ id: String(relation.id), source: String(relation.subject_id), target: String(relation.object_id), predicate: String(relation.predicate), validFrom: relation.valid_from ? String(relation.valid_from) : undefined, validTo: relation.valid_to ? String(relation.valid_to) : undefined, evidenceIds: relation.source_memory_id ? [String(relation.source_memory_id)] : [] })),

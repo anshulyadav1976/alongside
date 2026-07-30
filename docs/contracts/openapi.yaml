@@ -75,6 +75,12 @@ paths:
       operationId: updateJournal
       parameters: [{ $ref: '#/components/parameters/JournalId' }]
       responses: { '200': { description: Updated journal entry } }
+  /journals/latest:
+    get:
+      operationId: getLatestJournal
+      responses:
+        '200': { description: Latest journal entry for the demo user }
+        '404': { $ref: '#/components/responses/NotFound' }
   /memories:
     get:
       operationId: listMemories

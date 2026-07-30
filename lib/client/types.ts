@@ -9,12 +9,12 @@ export interface TranscriptTurn {
   text: string;
   startMs?: number;
   endMs?: number;
-  source: "openai" | "fallback";
+  source: "openai" | "demo" | "elevenlabs_fallback";
 }
 
 export interface Memory {
   id: string;
-  type: "preference" | "boundary" | "coping_strategy" | "person" | "event" | "observation";
+  type: string;
   statement: string;
   status: MemoryStatus;
   explicitness: "explicit" | "inferred";
@@ -46,7 +46,7 @@ export interface JournalEntry {
 
 export interface Session {
   id: string;
-  state: "ready" | "active" | "processing" | "ready_for_review" | "failed";
+  state: "created" | "ready" | "active" | "processing" | "ready_for_review" | "call_completed" | "failed";
   requestedSupportMode: SupportMode;
   memoryEnabled: boolean;
   startedAt: string;
@@ -60,12 +60,12 @@ export interface TurnResponse {
   userTranscript: string;
   assistantText: string;
   audioUrl?: string;
-  transcriptSource: "openai" | "fallback";
+  transcriptSource: "openai" | "demo" | "elevenlabs_fallback";
 }
 
 export interface GraphNode {
   id: string;
-  type: "event" | "person" | "strategy" | "boundary" | "preference" | "outcome";
+  type: string;
   label: string;
   status: "confirmed" | "inferred" | "historical";
   sensitivity: "low" | "medium" | "high";
@@ -109,6 +109,13 @@ export interface CheckInDecision {
   evidenceIds: string[];
 }
 
+export interface CheckInSettings {
+  enabled: boolean;
+  maxPerWeek: number;
+  cooldownHours: number;
+  pausedUntil?: string | null;
+}
+
 export interface DashboardData {
   latestJournal: JournalEntry;
   memoryInsight: Memory;
@@ -130,4 +137,6 @@ export interface ProductClient {
   getGraph(view: "current" | "history"): Promise<GraphResponse>;
   queryGraph(question: string): Promise<GraphQueryResponse>;
   getCheckInDecision(): Promise<CheckInDecision>;
+  getCheckInSettings(): Promise<CheckInSettings>;
+  updateCheckInSettings(changes: Partial<CheckInSettings>): Promise<CheckInSettings>;
 }

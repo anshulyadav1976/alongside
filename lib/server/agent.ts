@@ -8,12 +8,12 @@ import { persistExtraction } from "./extraction";
 import { synthesizeSpeech } from "./tts";
 import { safetyLevel, safetyResponse } from "./safety";
 
-export function createCall(db: DatabaseSync = getDatabase()) {
+export function createCall(db: DatabaseSync = getDatabase(), input?: { requestedSupportMode?: string; memoryEnabled?: boolean }) {
   const env = getEnv();
   seedDemo(db, env.DEMO_USER_ID);
   const sessionId = id("session");
   const timestamp = now();
-  db.prepare("INSERT INTO sessions (id, user_id, processing_state, memory_enabled, started_at, created_at, updated_at) VALUES (?, ?, 'ready', 1, ?, ?, ?)").run(sessionId, env.DEMO_USER_ID, timestamp, timestamp, timestamp);
+  db.prepare("INSERT INTO sessions (id, user_id, requested_support_mode, processing_state, memory_enabled, started_at, created_at, updated_at) VALUES (?, ?, ?, 'ready', ?, ?, ?, ?)").run(sessionId, env.DEMO_USER_ID, input?.requestedSupportMode ?? "open", input?.memoryEnabled === false ? 0 : 1, timestamp, timestamp, timestamp);
   return { sessionId, state: "ready" as const };
 }
 
