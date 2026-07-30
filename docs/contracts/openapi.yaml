@@ -1,0 +1,155 @@
+openapi: 3.1.0
+info:
+  title: Alongside local API
+  version: 0.2.0
+  description: Local hackathon API. Authentication is intentionally out of scope; requests use DEMO_USER_ID.
+servers:
+  - url: /api/v1
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      responses:
+        '200': { description: Service health, content: { application/json: { schema: { $ref: '#/components/schemas/Envelope' } } } }
+  /calls:
+    post:
+      operationId: createCall
+      responses:
+        '201': { description: Created call session, content: { application/json: { schema: { $ref: '#/components/schemas/Envelope' } } } }
+  /calls/{sessionId}/turn:
+    post:
+      operationId: processCallTurn
+      parameters: [{ $ref: '#/components/parameters/SessionId' }]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [audio]
+              properties:
+                audio: { type: string, format: binary }
+                clientTurnId: { type: string }
+      responses:
+        '200': { description: Transcript, response, and optional TTS audio, content: { application/json: { schema: { $ref: '#/components/schemas/Envelope' } } } }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /calls/{sessionId}/turns/{turnId}/audio:
+    get:
+      operationId: getTurnAudio
+      parameters:
+        - { $ref: '#/components/parameters/SessionId' }
+        - { $ref: '#/components/parameters/TurnId' }
+      responses:
+        '200': { description: MP3 audio, content: { audio/mpeg: { schema: { type: string, format: binary } } } }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /calls/{sessionId}/end:
+    post:
+      operationId: endCall
+      parameters: [{ $ref: '#/components/parameters/SessionId' }]
+      responses:
+        '200': { description: Ended call }
+  /sessions:
+    get:
+      operationId: listSessions
+      responses:
+        '200': { description: Local sessions }
+  /sessions/{sessionId}:
+    get:
+      operationId: getSession
+      parameters: [{ $ref: '#/components/parameters/SessionId' }]
+      responses:
+        '200': { description: Session details }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /sessions/{sessionId}/transcript:
+    get:
+      operationId: getTranscript
+      parameters: [{ $ref: '#/components/parameters/SessionId' }]
+      responses:
+        '200': { description: Canonical transcript turns }
+  /journals/{journalId}:
+    get:
+      operationId: getJournal
+      parameters: [{ $ref: '#/components/parameters/JournalId' }]
+      responses: { '200': { description: Journal entry }, '404': { $ref: '#/components/responses/NotFound' } }
+    patch:
+      operationId: updateJournal
+      parameters: [{ $ref: '#/components/parameters/JournalId' }]
+      responses: { '200': { description: Updated journal entry } }
+  /memories:
+    get:
+      operationId: listMemories
+      responses: { '200': { description: Filtered memories } }
+  /memories/{memoryId}:
+    patch:
+      operationId: updateMemory
+      parameters: [{ $ref: '#/components/parameters/MemoryId' }]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/MemoryAction' } } }
+      responses: { '200': { description: Updated memory }, '404': { $ref: '#/components/responses/NotFound' } }
+  /graph:
+    get:
+      operationId: getGraph
+      parameters:
+        - in: query
+          name: view
+          schema: { type: string, enum: [current, history], default: current }
+      responses: { '200': { description: Temporal graph projection } }
+  /graph/query:
+    post:
+      operationId: queryGraph
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [question]
+              properties:
+                question: { type: string, minLength: 1 }
+                view: { type: string, enum: [current, history] }
+      responses: { '200': { description: Evidence-linked answer or abstention } }
+  /support/select-mode:
+    post:
+      operationId: selectSupportMode
+      responses: { '200': { description: Selected support mode } }
+  /interventions/{interventionId}/outcome:
+    post:
+      operationId: recordInterventionOutcome
+      parameters: [{ $ref: '#/components/parameters/InterventionId' }]
+      responses: { '200': { description: Recorded outcome } }
+  /checkins/decision:
+    post:
+      operationId: decideCheckIn
+      responses: { '200': { description: CHECK_IN or NO_ACTION decision } }
+  /settings/checkins:
+    get:
+      operationId: getCheckInSettings
+      responses: { '200': { description: Current check-in policy } }
+    patch:
+      operationId: updateCheckInSettings
+      responses: { '200': { description: Updated check-in policy } }
+components:
+  parameters:
+    SessionId: { in: path, name: sessionId, required: true, schema: { type: string } }
+    TurnId: { in: path, name: turnId, required: true, schema: { type: string } }
+    JournalId: { in: path, name: journalId, required: true, schema: { type: string } }
+    MemoryId: { in: path, name: memoryId, required: true, schema: { type: string } }
+    InterventionId: { in: path, name: interventionId, required: true, schema: { type: string } }
+  responses:
+    NotFound: { description: Resource not found }
+  schemas:
+    Envelope:
+      type: object
+      required: [data]
+      properties:
+        data: {}
+        error: { type: string }
+    MemoryAction:
+      type: object
+      required: [action]
+      properties:
+        action: { type: string, enum: [confirm, edit_confirm, reject, make_temporary, change_permission, forget] }
+        content: { type: string }
+        expiresAt: { type: string, format: date-time }
+        reusePermission: { type: string, enum: [allowed, ask_first, never_proactive] }

@@ -1,0 +1,13 @@
+# Local secrets
+.env
+.env.local
+.env.*.local
+
+# Local runtime data
+data/*.db
+data/*.db-*
+data/audio/
+data/**/*.mp3
+
+# Inspection/build scratch files
+tmp/
