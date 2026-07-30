@@ -1,7 +1,7 @@
 # Technical status
 
 - **Branch:** `codex/technical-core`
-- **Commit:** `f9e6c87`
+- **Commit:** `db0c8e8`
 - **Active slice:** `S1-S5-local-mvp`
 - **State:** `READY_FOR_PRODUCT`
 - **Updated:** 2026-07-30
