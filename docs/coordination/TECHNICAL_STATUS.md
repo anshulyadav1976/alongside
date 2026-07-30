@@ -17,6 +17,7 @@
 - Product consumes the canonical call-turn contract; no provider token or webhook is required.
 - The merged UI uses the server-owned agent, SQLite persistence, local temporal graph, and ElevenLabs-only TTS boundary.
 - Endpoint smoke and browser smoke passed on the merged `main` branch.
+- Live voice round-trip passed: GPT Realtime transcribed spoken content, GPT-5.4 Mini answered that content, ElevenLabs produced an MP3, and the authenticated audio route returned HTTP 200.
 
 ## Tests
 

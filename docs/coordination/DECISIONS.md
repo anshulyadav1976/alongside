@@ -12,7 +12,7 @@ Human/integration-owned. Append new ADR-style entries.
 ## ADR-002 — Supabase temporal graph projection
 
 - **Status:** Accepted
-- **Decision:** Store graph nodes/relations in Postgres with valid/system time rather than adding Neo4j.
+- **Decision:** Store canonical graph nodes/relations in local SQLite with valid/system time and rebuild a JSON projection for the UI.
 - **Reason:** Fewer moving parts and easier provenance/RLS.
 - **Consequence:** React Flow visualises API-provided graph data; graph can migrate later.
 
@@ -25,7 +25,7 @@ Human/integration-owned. Append new ADR-style entries.
 ## ADR-004 — OpenAI canonical persisted transcript
 
 - **Status:** Accepted
-- **Decision:** ElevenLabs handles live voice; OpenAI creates the persisted canonical transcript from short-lived audio.
+- **Decision:** The browser records and resamples each turn, GPT Realtime 2.1 creates the canonical transcript, GPT-5.4 Mini runs our agent, and ElevenLabs is used only for TTS.
 - **Reason:** Matches provider split and enables consistent downstream processing.
 
 ## ADR-005 — No-action policy

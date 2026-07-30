@@ -29,7 +29,13 @@ export async function processTurn(db: DatabaseSync, sessionId: string, userId: s
     if (prior) return { data: await responseForExistingTurn(db, sessionId, userId, String(prior.id)) };
   }
   db.prepare("UPDATE sessions SET processing_state = 'transcribing', updated_at = ? WHERE id = ?").run(now(), sessionId);
-  const transcription = await transcribeAudio(file);
+  let transcription;
+  try {
+    transcription = await transcribeAudio(file);
+  } catch (error) {
+    db.prepare("UPDATE sessions SET processing_state = 'active', updated_at = ? WHERE id = ?").run(now(), sessionId);
+    return { error: "TRANSCRIPTION_FAILED" as const, message: error instanceof Error ? error.message : "We could not understand that recording." };
+  }
   const userTurnId = clientTurnId || id("turn");
   const nextIndex = Number((db.prepare("SELECT COALESCE(MAX(turn_index), -1) AS max_index FROM transcript_turns WHERE session_id = ?").get(sessionId) as { max_index: number }).max_index) + 1;
   db.prepare("INSERT INTO transcript_turns (id, user_id, session_id, turn_index, speaker, text, source, model, created_at) VALUES (?, ?, ?, ?, 'user', ?, ?, ?, ?)").run(userTurnId, userId, sessionId, nextIndex, transcription.text, transcription.source, transcription.source === "openai" ? getEnv().OPENAI_TRANSCRIPTION_MODEL : "demo", now());
@@ -40,13 +46,15 @@ export async function processTurn(db: DatabaseSync, sessionId: string, userId: s
   const agentTurnId = id("turn");
   db.prepare("INSERT INTO transcript_turns (id, user_id, session_id, turn_index, speaker, text, source, model, created_at) VALUES (?, ?, ?, ?, 'agent', ?, ?, ?, ?)").run(agentTurnId, userId, sessionId, nextIndex + 1, response.text, response.source, response.source === "openai" ? getEnv().OPENAI_PROCESSING_MODEL : "demo", now());
   const speech = await synthesizeSpeech(response.text, agentTurnId);
+  if (speech.audioPath) db.prepare("UPDATE transcript_turns SET audio_path = ? WHERE id = ?").run(speech.audioPath, agentTurnId);
   db.prepare("UPDATE sessions SET processing_state = 'active', updated_at = ? WHERE id = ?").run(now(), sessionId);
-  return { data: { sessionId, turnId: agentTurnId, userTranscript: transcription.text, assistantText: response.text, audioUrl: speech.audioUrl ? `/api/v1/calls/${sessionId}/turns/${agentTurnId}/audio` : undefined, transcriptSource: transcription.source } };
+  return { data: { sessionId, turnId: agentTurnId, userTranscript: transcription.text, assistantText: response.text, audioUrl: speech.audioPath ? `/api/v1/calls/${sessionId}/turns/${agentTurnId}/audio` : undefined, audioError: speech.errorMessage ? { code: speech.errorCode, message: speech.errorMessage } : undefined, transcriptSource: transcription.source } };
 }
 
 async function responseForExistingTurn(db: DatabaseSync, sessionId: string, userId: string, userTurnId: string) {
   const agent = db.prepare("SELECT * FROM transcript_turns WHERE session_id = ? AND turn_index = (SELECT turn_index + 1 FROM transcript_turns WHERE id = ?)").get(sessionId, userTurnId) as Record<string, unknown> | undefined;
-  return { sessionId, turnId: String(agent?.id ?? userTurnId), userTranscript: String((db.prepare("SELECT text FROM transcript_turns WHERE id = ?").get(userTurnId) as { text: string }).text), assistantText: String(agent?.text ?? "I’m with you. What feels most important right now?"), audioUrl: undefined, transcriptSource: "demo" as const };
+  const turnId = String(agent?.id ?? userTurnId);
+  return { sessionId, turnId, userTranscript: String((db.prepare("SELECT text FROM transcript_turns WHERE id = ?").get(userTurnId) as { text: string }).text), assistantText: String(agent?.text ?? "I’m with you. What feels most important right now?"), audioUrl: agent?.audio_path ? `/api/v1/calls/${sessionId}/turns/${turnId}/audio` : undefined, transcriptSource: "demo" as const };
 }
 
 export async function endCall(db: DatabaseSync, sessionId: string, userId: string) {

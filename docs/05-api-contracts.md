@@ -50,11 +50,12 @@ Response data:
   "userTranscript": "I need help preparing for tomorrow.",
   "assistantText": "Let us keep it practical and make a short question list.",
   "audioUrl": "/api/v1/calls/ses_123/turns/turn_123/audio",
+  "audioError": null,
   "transcriptSource": "openai"
 }
 ```
 
-The server transcribes with GPT, generates a short GPT-5.4 Mini answer, persists both turns, and streams or stores ElevenLabs TTS output. `transcriptSource` may be `elevenlabs_fallback` when GPT audio transcription is unavailable.
+The browser sends a 24 kHz mono WAV. The server transcribes it through GPT Realtime 2.1, generates a GPT-5.4 Mini answer, persists both turns, and stores ElevenLabs TTS output. If transcription fails, the endpoint returns `TRANSCRIPTION_FAILED` without persisting invented user text. If TTS fails, the text response remains successful and `audioError` explains why voice is unavailable.
 
 ### `GET /calls/{sessionId}/turns/{turnId}/audio`
 

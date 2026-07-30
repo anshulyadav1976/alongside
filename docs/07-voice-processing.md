@@ -4,63 +4,48 @@
 
 ### Browser and Next.js
 
-- Capture one microphone turn with browser media APIs.
-- Upload audio to the local `/api/v1/calls/{sessionId}/turn` route.
-- Display recording/transcribing/thinking/speaking states.
-- Play server-returned audio and render captions.
+- Capture one microphone turn with `MediaRecorder`.
+- Decode and resample the recording to 24 kHz mono PCM16 WAV with Web Audio.
+- Upload it to `/api/v1/calls/{sessionId}/turn`.
+- Display recording, transcription, thinking, speaking, and actionable failure states.
+- Play the server-returned ElevenLabs MP3 while rendering captions.
 
 ### OpenAI-compatible gateway
 
-- GPT audio transcription for the user turn and post-call canonical transcript.
-- GPT-5.4 Mini response generation.
-- Strict structured journal, memory, state, and intervention extraction.
-- Graph-query answer generation over bounded evidence.
-- Optional moderation signal as one part of the fixed safety policy.
+- GPT Realtime 2.1 transcribes the user turn over the server-side WebSocket endpoint.
+- GPT-5.4 Mini generates the agent response and structured journal/memory extraction.
+- The configured gateway error is surfaced when transcription fails; placeholder speech is never persisted.
 
 ### ElevenLabs
 
-- Text-to-Speech only.
-- Use the server-side `/v1/text-to-speech/{voice_id}/stream` API.
-- Prefer `eleven_flash_v2_5` for low-latency streaming.
-- Keep `ELEVENLABS_API_KEY` and `ELEVENLABS_VOICE_ID` server-only.
+- Text-to-Speech only through `/v1/text-to-speech/{voice_id}/stream`.
+- `eleven_flash_v2_5` is the low-latency model.
+- `ELEVENLABS_API_KEY` and `ELEVENLABS_VOICE_ID` stay server-only.
+- The API key must include `text_to_speech` permission.
 
 ## Turn pipeline
 
 ```text
-record audio
-→ POST /calls/{sessionId}/turn
-→ GPT audio transcription
-→ bounded context retrieval
-→ GPT-5.4 Mini response
-→ ElevenLabs streaming TTS
-→ persist transcript turns
-→ return assistant text + audio URL/stream
+record microphone turn
+-> decode and resample to 24 kHz mono WAV
+-> POST /calls/{sessionId}/turn
+-> GPT Realtime 2.1 transcription
+-> bounded memory context retrieval
+-> GPT-5.4 Mini response
+-> ElevenLabs TTS
+-> persist canonical transcript turns and MP3 path
+-> return assistant text plus audio URL
 ```
 
-The MVP is turn-based and interruptible between turns. Full-duplex barge-in and a custom WebSocket protocol are out of scope unless the demo is already stable.
-
-Before response generation, a deterministic high-risk phrase gate can short-circuit the creative model and return the fixed emergency-support boundary. The canonical user and assistant turns are still persisted for the local demo.
+The MVP is turn-based. Full-duplex barge-in remains out of scope. A deterministic urgent-risk gate may short-circuit creative response generation and return the fixed emergency-support boundary.
 
 ## Post-call extraction
 
-Use GPT-5.4 Mini with a validated JSON contract to produce:
-
-- journal draft;
-- explicit decisions;
-- upcoming moments;
-- candidate memories;
-- candidate graph entities/relations;
-- intervention offers/outcomes;
-- uncertain observations;
-- safety flags for review.
-
-Application code validates output before writing SQLite. Durable memory remains proposed until user review.
-
-The extractor persists an editable journal, proposed memories with source quotes and permissions, entity nodes, and relation edges. Relations are only written when both endpoint entity keys resolve; the graph JSON is rebuilt from those SQLite records. If the provider is unavailable, the same contract falls back to a deterministic, clearly lower-confidence extractor for local rehearsal.
+GPT-5.4 Mini produces a validated journal draft, decisions, upcoming moments, candidate memories, graph entities/relations, and safety flags. Durable memories remain proposed until user review. If structured extraction fails, the same contract uses a deterministic, lower-confidence local extractor.
 
 ## Failure modes
 
-- GPT transcription failure: show processing failure or a visibly marked ElevenLabs transcript fallback; never invent a journal.
-- GPT response failure: show text/demo fallback and keep the session usable.
-- ElevenLabs TTS failure: keep the assistant text/captions and expose a replayable text fallback.
-- Schema validation failure: retry once, then preserve the transcript for manual editing.
+- GPT transcription failure: return `TRANSCRIPTION_FAILED`, show a retryable UI error, and persist no invented user turn.
+- GPT response failure: preserve the real transcript and show the bounded text fallback.
+- ElevenLabs TTS failure: keep captions and show the actionable TTS error; do not substitute another voice provider.
+- Audio playback failure: keep Replay disabled and show that the generated audio could not be loaded.

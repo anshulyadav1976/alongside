@@ -60,6 +60,7 @@ export interface TurnResponse {
   userTranscript: string;
   assistantText: string;
   audioUrl?: string;
+  audioError?: { code?: string; message: string };
   transcriptSource: "openai" | "demo" | "elevenlabs_fallback";
 }
 

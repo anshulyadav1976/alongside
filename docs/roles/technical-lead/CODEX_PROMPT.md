@@ -6,7 +6,7 @@ Work only on branch `codex/technical-core`. Before editing, read the root `AGENT
 
 Own only backend, AI, memory, safety, Supabase, contracts, and backend-test paths defined in root `AGENTS.md`. Do not edit product-owned pages or components.
 
-Implement the currently active paired slice from `PLAN.md`. Work contract-first. Keep the app functional after every commit. Use ElevenLabs for realtime voice and OpenAI for canonical transcription and structured processing. Use Supabase Postgres for temporal memory and graph projection. Durable sensitive memory is proposed until user confirmation. Preserve provenance, valid/system time, revocation, and `NO_ACTION`.
+Implement the currently active paired slice from `PLAN.md`. Work contract-first. Keep the app functional after every commit. Use GPT Realtime 2.1 for canonical transcription, GPT-5.4 Mini for the server-owned agent and structured processing, and ElevenLabs only for TTS. Use local SQLite for temporal memory and rebuildable JSON graph projection. Durable sensitive memory is proposed until user confirmation. Preserve provenance, valid/system time, revocation, and `NO_ACTION`.
 
 After each meaningful change:
 
