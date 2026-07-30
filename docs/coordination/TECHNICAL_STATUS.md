@@ -1,9 +1,9 @@
 # Technical status
 
 - **Branch:** `codex/technical-core`
-- **Commit:** safety/journal hardening
+- **Commit:** `f9e6c87`
 - **Active slice:** `S1-S5-local-mvp`
-- **State:** `IMPLEMENTED_NEEDS_PUSH`
+- **State:** `READY_FOR_PRODUCT`
 - **Updated:** 2026-07-30
 
 ## Completed
@@ -23,7 +23,7 @@
 
 ## Contract changes
 
-- None.
+- Local `/calls` turn contract replaces the old provider-token/webhook flow.
 
 ## Tests
 
@@ -34,11 +34,11 @@
 
 ## Blockers
 
-- Provider calls have deterministic demo fallbacks for local rehearsal. ElevenLabs voice is available when the local key/voice configuration is present.
+- None for local demo. Provider calls have deterministic fallbacks; ElevenLabs voice is available when the local key/voice configuration is present.
 
 ## Next action
 
-- Technical MVP is ready for product integration; run the product surface against the canonical call-turn contract.
+- Technical MVP is pushed; product can integrate against the canonical call-turn contract.
 
 ## Request to product agent
 
