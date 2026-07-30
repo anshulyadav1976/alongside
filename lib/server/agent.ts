@@ -42,7 +42,7 @@ export async function processTurn(db: DatabaseSync, sessionId: string, userId: s
   db.prepare("UPDATE sessions SET processing_state = 'thinking', updated_at = ? WHERE id = ?").run(now(), sessionId);
   const risk = safetyLevel(transcription.text);
   const context = listMemories(db, userId, "current").filter((memory) => memory.reusePermission !== "never_proactive").slice(0, 6).map((memory) => `- ${memory.statement}`).join("\n");
-  const response = risk === "urgent" ? { text: safetyResponse(), source: "demo" as const } : await generateResponse(transcription.text, context);
+  const response = risk === "urgent" ? { text: safetyResponse(), source: "demo" as const } : await generateResponse(transcription.text, context, nextIndex === 0);
   const agentTurnId = id("turn");
   db.prepare("INSERT INTO transcript_turns (id, user_id, session_id, turn_index, speaker, text, source, model, created_at) VALUES (?, ?, ?, ?, 'agent', ?, ?, ?, ?)").run(agentTurnId, userId, sessionId, nextIndex + 1, response.text, response.source, response.source === "openai" ? getEnv().OPENAI_PROCESSING_MODEL : "demo", now());
   const speech = await synthesizeSpeech(response.text, agentTurnId);

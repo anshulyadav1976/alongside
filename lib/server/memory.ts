@@ -37,6 +37,7 @@ export function updateMemory(db: DatabaseSync, userId: string, memoryId: string,
 
 export function graphProjection(db: DatabaseSync, userId: string, view: "current" | "history" = "current") {
   const memories = listMemories(db, userId, view);
+  const memoryById = new Map(memories.map((memory) => [memory.id, memory]));
   const allowedIds = new Set(memories.map((memory) => memory.id));
   const entities = (db.prepare("SELECT * FROM entities WHERE user_id = ? AND revoked_at IS NULL").all(userId) as Row[]).filter((entity) => !entity.source_memory_id || allowedIds.has(String(entity.source_memory_id)));
   const entityIds = new Set(entities.map((entity) => String(entity.id)));
@@ -45,10 +46,13 @@ export function graphProjection(db: DatabaseSync, userId: string, view: "current
     view,
     generatedAt: now(),
     nodes: [
-      ...memories.map((memory) => ({ id: memory.id, type: memory.type, label: memory.statement, status: view === "current" ? "confirmed" : memory.status, sensitivity: memory.sensitivity, validFrom: memory.validFrom, validTo: memory.validTo, evidenceIds: [memory.sourceTurnId ?? memory.sourceSessionId], sourceQuote: memory.sourceQuote, sourceSessionId: memory.sourceSessionId })),
-      ...entities.map((entity) => ({ id: String(entity.id), type: String(entity.entity_type), label: String(entity.label), status: view === "current" ? "confirmed" : "historical", sensitivity: "low", evidenceIds: entity.source_memory_id ? [String(entity.source_memory_id)] : [], metadata: parse(entity.attributes_json) })),
+      ...memories.map((memory) => ({ id: memory.id, type: memory.type, label: memory.statement, status: view === "current" || memory.status === "confirmed" ? "confirmed" : "historical", sensitivity: memory.sensitivity, validFrom: memory.validFrom, validTo: memory.validTo, evidenceIds: [memory.sourceTurnId ?? memory.sourceSessionId], sourceQuote: memory.sourceQuote, sourceSessionId: memory.sourceSessionId })),
+      ...entities.map((entity) => { const source = memoryById.get(String(entity.source_memory_id)); return { id: String(entity.id), type: String(entity.entity_type), label: String(entity.label), status: view === "current" ? "confirmed" : "historical", sensitivity: source?.sensitivity ?? "low", evidenceIds: source ? [source.sourceTurnId ?? source.id] : [], sourceQuote: source?.sourceQuote, sourceSessionId: source?.sourceSessionId, metadata: parse(entity.attributes_json) }; }),
     ],
-    edges: relations.map((relation) => ({ id: String(relation.id), source: String(relation.subject_id), target: String(relation.object_id), predicate: String(relation.predicate), validFrom: relation.valid_from ? String(relation.valid_from) : undefined, validTo: relation.valid_to ? String(relation.valid_to) : undefined, evidenceIds: relation.source_memory_id ? [String(relation.source_memory_id)] : [] })),
+    edges: [
+      ...relations.map((relation) => ({ id: String(relation.id), source: String(relation.subject_id), target: String(relation.object_id), predicate: String(relation.predicate), validFrom: relation.valid_from ? String(relation.valid_from) : undefined, validTo: relation.valid_to ? String(relation.valid_to) : undefined, evidenceIds: relation.source_memory_id ? [String(relation.source_memory_id)] : [] })),
+      ...entities.filter((entity) => entity.source_memory_id && allowedIds.has(String(entity.source_memory_id))).map((entity) => ({ id: `evidence_${entity.source_memory_id}_${entity.id}`, source: String(entity.source_memory_id), target: String(entity.id), predicate: "SUPPORTS", evidenceIds: [String(entity.source_memory_id)] })),
+    ],
   };
   try {
     mkdirSync(resolve(process.cwd(), "data"), { recursive: true });

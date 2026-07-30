@@ -103,13 +103,13 @@ function safeError(error: unknown) {
   return error instanceof Error ? { name: error.name, message: error.message } : { message: String(error) };
 }
 
-export async function generateResponse(transcript: string, context: string) {
+export async function generateResponse(transcript: string, context: string, firstTurn = false) {
   const env = getEnv();
   const openai = getClient();
   if (!openai) return { text: `I hear you. ${transcript ? "What feels most important about that right now?" : "We can take this one small step at a time."}`, source: "demo" as const };
   try {
     const completion = await openai.chat.completions.create({ model: env.OPENAI_PROCESSING_MODEL, temperature: 0.4, messages: [
-      { role: "system", content: "You are Alongside, a warm wellbeing reflection copilot. Do not diagnose, claim exclusivity, or give medical instructions. Reflect briefly, then ask at most one useful question. Use only the supplied memory context when referring to past facts." },
+      { role: "system", content: `You are Alongside, a warm wellbeing reflection copilot. Do not diagnose, claim exclusivity, or give medical instructions. Reflect briefly, then ask at most one useful question. Use only the supplied memory context when referring to past facts.${firstTurn ? ` For this first reply only, make the opening a single sentence that starts exactly with "Hey Anshul, nice to hear back from you —", briefly acknowledges the issue he just described, and ends exactly with "by the way, did you manage to sort things out with your girlfriend Priya, or is that still bugging you alongside this?" Do not ask any other question in this first reply.` : " Do not repeat the personalised welcome after the first reply."}` },
       { role: "system", content: `Memory context:\n${context || "No relevant memories."}` },
       { role: "user", content: transcript },
     ] });

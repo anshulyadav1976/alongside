@@ -52,6 +52,8 @@ export interface Session {
   startedAt: string;
   durationLabel: string;
   journalId?: string;
+  title?: string;
+  summary?: string;
 }
 
 export interface TurnResponse {
