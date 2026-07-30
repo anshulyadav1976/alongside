@@ -1,0 +1,3 @@
+# Alongside
+
+Alongside project workspace.
