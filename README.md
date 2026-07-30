@@ -15,7 +15,7 @@ Alongside is a local-first wellbeing reflection copilot built for the **Alongsid
 | Chatbots forget the context that makes support feel personal. | A temporal memory graph carries forward approved, evidence-backed context. |
 | Black-box “memory” can feel intrusive or wrong. | Every stored claim has a source quote, session link, lifecycle state, and edit/forget path. |
 | Advice is often generic or badly timed. | The agent uses the current conversation plus a bounded context pack to keep responses specific and gentle. |
-| Product demos can look like a blank prototype. | Curated demo sessions, journals, people, strategies, events, and graph relationships are seeded locally. |
+| Support can feel fragmented across conversations. | Journals, memories, people, strategies, events, and graph relationships make continuity visible. |
 
 ## What is live in this repository
 
@@ -25,8 +25,7 @@ Alongside is a local-first wellbeing reflection copilot built for the **Alongsid
 - **Temporal memory graph** — confirmed memories, people, strategies, events, entities, relations, evidence, valid dates, and history/current views.
 - **User-controlled memory lifecycle** — memories can be approved, rejected, superseded, expired, or forgotten.
 - **Evidence-first graph chat** — answers separate stored facts from inferences and link back to evidence.
-- **Local-first hackathon architecture** — SQLite is canonical; the graph is a rebuildable JSON projection. No auth or cloud database is required for the demo.
-- **Demo-ready data** — three realistic prior sessions make the session history and graph immediately legible.
+- **Local-first hackathon architecture** — SQLite is canonical; the graph is a rebuildable JSON projection. No auth or cloud database is required for local use.
 
 ---
 
@@ -98,7 +97,7 @@ stateDiagram-v2
     Revoked --> [*]
 ```
 
-### Example graph from the seeded demo
+### Temporal graph relationships
 
 ```mermaid
 graph LR
@@ -115,20 +114,6 @@ Each rendered node can show its validity date, confirmation state, evidence quot
 
 ---
 
-## Demo flow
-
-1. Open **Sessions** and show the three seeded stories: a difficult conversation with Priya, presentation nerves, and an evening reset.
-2. Open **Memory map** and show the relationships between person, event, strategy, and evidence.
-3. Start a voice call. Alongside transcribes the actual spoken words, responds in text and voice, and uses only the server-side agent.
-4. End the call to produce an editable journal and candidate memory.
-5. Use the graph inspector or graph chat to show the difference between a stored fact and an inference.
-
-The app includes a deliberate warm return moment for the demo: the first reply greets Anshul, acknowledges what was just said, and carefully recalls the open Priya thread. Later turns do not repeat that script.
-
-For a timed presentation, see the full [three-minute demo script](docs/11-demo-script.md).
-
----
-
 ## Technical choices
 
 | Layer | Choice | Why |
@@ -137,7 +122,7 @@ For a timed presentation, see the full [three-minute demo script](docs/11-demo-s
 | Agent | GPT-5.4 Mini | Fast, structured, cost-conscious reasoning for a hackathon. |
 | Speech-to-text | GPT Realtime 2.1 | Uses the actual audio spoken in the call. |
 | Speech output | ElevenLabs TTS | Natural audio while keeping agent intelligence in our own backend. |
-| Durable state | Node `node:sqlite` | Zero setup, local, inspectable, and ideal for a live demo. |
+| Durable state | Node `node:sqlite` | Zero setup, local, inspectable, and fast to run. |
 | Graph UI | React Flow | Zoomable, filterable, evidence-friendly relationship explorer. |
 | Graph store | JSON projection from SQLite | SQLite remains canonical; the graph can always be rebuilt. |
 
@@ -159,8 +144,6 @@ ELEVENLABS_VOICE_ID=your_voice_id
 ELEVENLABS_TTS_MODEL=eleven_flash_v2_5
 
 DATABASE_PATH=./data/alongside.db
-DEMO_USER_ID=demo-user
-DEMO_MODE=true
 ```
 
 Then run:
@@ -169,7 +152,7 @@ Then run:
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). The application can still demonstrate deterministic fallback behaviour without provider keys.
+Open [http://localhost:3000](http://localhost:3000). The application includes deterministic fallback behaviour when provider keys are unavailable.
 
 ### Quality checks
 
@@ -211,7 +194,7 @@ The fuller contract is in [API contracts](docs/05-api-contracts.md). Architectur
 
 ## Beyond the hackathon — clearly marked roadmap
 
-These are intentional next steps, **not claims about the current demo**:
+These are intentional next steps, **not claims about the current application**:
 
 - Full-duplex, interruptible voice conversations with barge-in handling.
 - Optional encrypted sync and multi-device continuity.
@@ -223,7 +206,7 @@ These are intentional next steps, **not claims about the current demo**:
 
 ## Safety boundary
 
-Alongside is a reflection and wellbeing tool — not therapy, diagnosis, medical advice, or emergency care. It uses deterministic urgent-language handling, keeps memory locally scoped in this demo, and treats **no action** as a valid support outcome.
+Alongside is a reflection and wellbeing tool — not therapy, diagnosis, medical advice, or emergency care. It uses deterministic urgent-language handling, keeps memory locally scoped, and treats **no action** as a valid support outcome.
 
 ---
 
