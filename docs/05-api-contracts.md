@@ -64,6 +64,8 @@ Streams the generated ElevenLabs audio for playback. The route never exposes pro
 
 Ends the call and starts journal/memory extraction.
 
+Extraction writes an editable journal plus proposed memories, entity nodes, and relation edges from the canonical transcript. Proposed memories remain reviewable until explicitly confirmed.
+
 ## Sessions
 
 - `GET /sessions` returns local call history.

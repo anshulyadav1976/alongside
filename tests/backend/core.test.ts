@@ -7,6 +7,7 @@ import { createDatabase, seedDemo } from "../../lib/server/db";
 import { graphProjection, listMemories, updateMemory } from "../../lib/server/memory";
 import { endCall, processTurn } from "../../lib/server/agent";
 import { safetyLevel } from "../../lib/server/safety";
+import { fallbackExtraction, persistExtraction } from "../../lib/server/extraction";
 
 const paths: string[] = [];
 afterEach(() => { for (const path of paths.splice(0)) rmSync(path, { recursive: true, force: true }); });
@@ -20,9 +21,26 @@ describe("SQLite memory lifecycle", () => {
 });
 
 describe("own-agent fallback", () => {
-  it("creates a transcript, response, and journal without provider keys", async () => { const db = fixture(); const sessionId = String((db.prepare("SELECT id FROM sessions WHERE user_id = ? LIMIT 1").get("test-user") as { id: string }).id); db.prepare("UPDATE sessions SET processing_state = 'ready' WHERE id = ?").run(sessionId); const result = await processTurn(db, sessionId, "test-user", new File(["hello"], "voice.webm", { type: "audio/webm" })); assert.ok("data" in result); assert.equal(result.data?.sessionId, sessionId); assert.match(result.data?.assistantText ?? "", /hear you|one small step/i); assert.equal((db.prepare("SELECT COUNT(*) AS count FROM transcript_turns WHERE session_id = ?").get(sessionId) as { count: number }).count, 4); endCall(db, sessionId, "test-user"); assert.equal((db.prepare("SELECT COUNT(*) AS count FROM journal_entries WHERE session_id = ?").get(sessionId) as { count: number }).count, 1); db.close(); });
+  it("creates a transcript, response, and extracted journal without provider keys", async () => { const db = fixture(); const sessionId = String((db.prepare("SELECT id FROM sessions WHERE user_id = ? LIMIT 1").get("test-user") as { id: string }).id); db.prepare("UPDATE sessions SET processing_state = 'ready' WHERE id = ?").run(sessionId); const result = await processTurn(db, sessionId, "test-user", new File(["hello"], "voice.webm", { type: "audio/webm" })); assert.ok("data" in result); assert.equal(result.data?.sessionId, sessionId); assert.match(result.data?.assistantText ?? "", /hear you|one small step/i); assert.equal((db.prepare("SELECT COUNT(*) AS count FROM transcript_turns WHERE session_id = ?").get(sessionId) as { count: number }).count, 4); await endCall(db, sessionId, "test-user"); const journal = db.prepare("SELECT content_json FROM journal_entries WHERE session_id = ?").get(sessionId) as { content_json: string }; assert.ok(JSON.parse(journal.content_json).importantMoments.length >= 1); db.close(); });
 });
 
 describe("safety boundary", () => {
   it("uses deterministic urgent classification", () => { assert.equal(safetyLevel("I might hurt myself tonight"), "urgent"); assert.equal(safetyLevel("I had a difficult day"), "normal"); });
+});
+
+describe("structured journal and graph extraction", () => {
+  it("persists grounded memories, entities, and relations", () => {
+    const db = fixture();
+    const sessionId = String((db.prepare("SELECT id FROM sessions WHERE user_id = ? LIMIT 1").get("test-user") as { id: string }).id);
+    const extraction = fallbackExtraction([{ speaker: "user", text: "I work with my mentor Maya on a launch. Walking after dinner helps, and I want calmer evenings." }]);
+    const persisted = persistExtraction(db, "test-user", sessionId, extraction);
+    assert.ok(persisted.memoryIds.length >= 2);
+    assert.ok(persisted.entityIds.length >= 2);
+    const graph = graphProjection(db, "test-user", "history");
+    assert.ok(graph.nodes.some((node) => node.label === "Maya"));
+    assert.ok(graph.edges.some((edge) => edge.predicate.includes("mentor")));
+    const journal = db.prepare("SELECT content_json FROM journal_entries WHERE session_id = ?").get(sessionId) as { content_json: string };
+    assert.equal(JSON.parse(journal.content_json).candidateMemories.length, extraction.memories.length);
+    db.close();
+  });
 });

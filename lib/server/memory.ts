@@ -15,7 +15,7 @@ export function listMemories(db: DatabaseSync = getDatabase(), userId: string, v
 }
 
 export function memoryFromRow(row: Row) {
-  const projection = {
+  return {
     id: String(row.id), type: String(row.memory_type), statement: String(row.statement), structuredContent: parse(row.content_json),
     status: String(row.status), explicitness: String(row.explicitness), confidence: Number(row.confidence), sensitivity: String(row.sensitivity),
     sourceSessionId: String(row.source_session_id ?? ""), sourceTurnId: row.source_turn_id ? String(row.source_turn_id) : undefined,
@@ -23,11 +23,6 @@ export function memoryFromRow(row: Row) {
     learnedAt: String(row.learned_at), invalidatedAt: row.invalidated_at ? String(row.invalidated_at) : undefined, expiresAt: row.expires_at ? String(row.expires_at) : undefined,
     supersededBy: row.superseded_by ? String(row.superseded_by) : undefined, reusePermission: String(row.reuse_permission),
   };
-  try {
-    mkdirSync(resolve(process.cwd(), "data"), { recursive: true });
-    writeFileSync(resolve(process.cwd(), "data/temporal-graph.json"), JSON.stringify(projection, null, 2), "utf8");
-  } catch { /* read-only deployments can still serve the in-memory projection */ }
-  return projection;
 }
 
 export function updateMemory(db: DatabaseSync, userId: string, memoryId: string, action: string, content?: string, expiresAt?: string, reusePermission?: string) {
@@ -46,12 +41,20 @@ export function graphProjection(db: DatabaseSync, userId: string, view: "current
   const entities = (db.prepare("SELECT * FROM entities WHERE user_id = ? AND revoked_at IS NULL").all(userId) as Row[]).filter((entity) => !entity.source_memory_id || allowedIds.has(String(entity.source_memory_id)));
   const entityIds = new Set(entities.map((entity) => String(entity.id)));
   const relations = (db.prepare("SELECT * FROM relations WHERE user_id = ? AND revoked_at IS NULL").all(userId) as Row[]).filter((relation) => entityIds.has(String(relation.subject_id)) && entityIds.has(String(relation.object_id)) && (!relation.source_memory_id || allowedIds.has(String(relation.source_memory_id))));
-  return {
+  const projection = {
     view,
     generatedAt: now(),
-    nodes: memories.map((memory) => ({ id: memory.id, type: memory.type, label: memory.statement, status: view === "current" ? "confirmed" : memory.status, sensitivity: memory.sensitivity, validFrom: memory.validFrom, validTo: memory.validTo, evidenceIds: [memory.sourceTurnId ?? memory.sourceSessionId] })),
+    nodes: [
+      ...memories.map((memory) => ({ id: memory.id, type: memory.type, label: memory.statement, status: view === "current" ? "confirmed" : memory.status, sensitivity: memory.sensitivity, validFrom: memory.validFrom, validTo: memory.validTo, evidenceIds: [memory.sourceTurnId ?? memory.sourceSessionId] })),
+      ...entities.map((entity) => ({ id: String(entity.id), type: String(entity.entity_type), label: String(entity.label), status: view === "current" ? "confirmed" : "historical", sensitivity: "low", evidenceIds: entity.source_memory_id ? [String(entity.source_memory_id)] : [], metadata: parse(entity.attributes_json) })),
+    ],
     edges: relations.map((relation) => ({ id: String(relation.id), source: String(relation.subject_id), target: String(relation.object_id), predicate: String(relation.predicate), validFrom: relation.valid_from ? String(relation.valid_from) : undefined, validTo: relation.valid_to ? String(relation.valid_to) : undefined, evidenceIds: relation.source_memory_id ? [String(relation.source_memory_id)] : [] })),
   };
+  try {
+    mkdirSync(resolve(process.cwd(), "data"), { recursive: true });
+    writeFileSync(resolve(process.cwd(), "data/temporal-graph.json"), JSON.stringify(projection, null, 2), "utf8");
+  } catch { /* read-only deployments can still serve the in-memory projection */ }
+  return projection;
 }
 
 export function journalFromRow(row: Row) {

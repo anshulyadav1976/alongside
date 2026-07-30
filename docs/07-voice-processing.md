@@ -43,7 +43,7 @@ Before response generation, a deterministic high-risk phrase gate can short-circ
 
 ## Post-call extraction
 
-Use GPT-5.4 Mini with a strict JSON schema to produce:
+Use GPT-5.4 Mini with a validated JSON contract to produce:
 
 - journal draft;
 - explicit decisions;
@@ -55,6 +55,8 @@ Use GPT-5.4 Mini with a strict JSON schema to produce:
 - safety flags for review.
 
 Application code validates output before writing SQLite. Durable memory remains proposed until user review.
+
+The extractor persists an editable journal, proposed memories with source quotes and permissions, entity nodes, and relation edges. Relations are only written when both endpoint entity keys resolve; the graph JSON is rebuilt from those SQLite records. If the provider is unavailable, the same contract falls back to a deterministic, clearly lower-confidence extractor for local rehearsal.
 
 ## Failure modes
 

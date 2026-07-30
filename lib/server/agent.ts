@@ -2,8 +2,9 @@ import type { DatabaseSync } from "node:sqlite";
 import { getDatabase, seedDemo } from "./db";
 import { getEnv } from "./env";
 import { id, now } from "./ids";
-import { listMemories, recordCandidateMemory } from "./memory";
-import { generateResponse, transcribeAudio } from "./ai";
+import { listMemories } from "./memory";
+import { extractConversation, generateResponse, transcribeAudio } from "./ai";
+import { persistExtraction } from "./extraction";
 import { synthesizeSpeech } from "./tts";
 import { safetyLevel, safetyResponse } from "./safety";
 
@@ -40,7 +41,6 @@ export async function processTurn(db: DatabaseSync, sessionId: string, userId: s
   db.prepare("INSERT INTO transcript_turns (id, user_id, session_id, turn_index, speaker, text, source, model, created_at) VALUES (?, ?, ?, ?, 'agent', ?, ?, ?, ?)").run(agentTurnId, userId, sessionId, nextIndex + 1, response.text, response.source, response.source === "openai" ? getEnv().OPENAI_PROCESSING_MODEL : "demo", now());
   const speech = await synthesizeSpeech(response.text, agentTurnId);
   db.prepare("UPDATE sessions SET processing_state = 'active', updated_at = ? WHERE id = ?").run(now(), sessionId);
-  recordCandidateMemory(db, userId, sessionId, userTurnId, transcription.text.length > 30 ? transcription.text.slice(0, 180) : "The user shared a brief reflection.");
   return { data: { sessionId, turnId: agentTurnId, userTranscript: transcription.text, assistantText: response.text, audioUrl: speech.audioUrl ? `/api/v1/calls/${sessionId}/turns/${agentTurnId}/audio` : undefined, transcriptSource: transcription.source } };
 }
 
@@ -49,13 +49,15 @@ async function responseForExistingTurn(db: DatabaseSync, sessionId: string, user
   return { sessionId, turnId: String(agent?.id ?? userTurnId), userTranscript: String((db.prepare("SELECT text FROM transcript_turns WHERE id = ?").get(userTurnId) as { text: string }).text), assistantText: String(agent?.text ?? "I’m with you. What feels most important right now?"), audioUrl: undefined, transcriptSource: "demo" as const };
 }
 
-export function endCall(db: DatabaseSync, sessionId: string, userId: string) {
+export async function endCall(db: DatabaseSync, sessionId: string, userId: string) {
   const timestamp = now();
   db.prepare("UPDATE sessions SET processing_state = 'call_completed', ended_at = ?, updated_at = ? WHERE id = ? AND user_id = ?").run(timestamp, timestamp, sessionId, userId);
   const turns = db.prepare("SELECT speaker, text FROM transcript_turns WHERE session_id = ? ORDER BY turn_index").all(sessionId) as Array<{ speaker: string; text: string }>;
   if (turns.length > 0) {
-    const userText = turns.filter((turn) => turn.speaker === "user").map((turn) => turn.text).join(" ").slice(0, 500);
-    db.prepare("INSERT INTO journal_entries (id, user_id, session_id, title, summary, content_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(session_id) DO UPDATE SET summary = excluded.summary, content_json = excluded.content_json, updated_at = excluded.updated_at").run(id("journal"), userId, sessionId, "A reflection from your call", userText || "A short conversation with Alongside.", JSON.stringify({ importantMoments: userText ? [userText] : [], whatHelped: [], whatDidNotHelp: [], nextSteps: [], candidateMemories: [] }), timestamp, timestamp);
+    db.prepare("UPDATE sessions SET processing_state = 'extracting', updated_at = ? WHERE id = ? AND user_id = ?").run(now(), sessionId, userId);
+    const { extraction } = await extractConversation(turns);
+    persistExtraction(db, userId, sessionId, extraction);
+    db.prepare("UPDATE sessions SET processing_state = 'ready', updated_at = ? WHERE id = ? AND user_id = ?").run(now(), sessionId, userId);
   }
   return getSession(db, sessionId, userId);
 }

@@ -15,6 +15,7 @@
 - SQLite seed, memory lifecycle, graph projection, check-in boundary, and deterministic provider fallbacks implemented.
 - Call creation, audio turn, TTS audio retrieval, session, journal, memory, graph, support, intervention, and check-in routes implemented.
 - Deterministic urgent-safety gate and end-call journal persistence added.
+- Rich GPT extraction added for journal fields, candidate memories, entities, relations, source quotes, permissions, and safety flags, with validated fallback extraction.
 
 ## Ready for product integration
 
@@ -29,8 +30,9 @@
 
 - `npm run typecheck` passed.
 - `npm run lint` passed.
-- `npm test` passed: 5 tests.
+- `npm test` passed: 6 tests.
 - `npm run build` passed.
+- Configured-model synthetic conversation passed: two bounded responses, six extracted memories, six entities, five graph edges persisted.
 
 ## Blockers
 

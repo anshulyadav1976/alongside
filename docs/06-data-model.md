@@ -10,6 +10,7 @@ The executable reference schema is in [`contracts/schema.sql`](contracts/schema.
 - Revocation is enforced in SQL/application retrieval, not only prompts.
 - A fixed `DEMO_USER_ID` replaces authentication.
 - Graph JSON can always be rebuilt from approved records.
+- LLM extraction writes proposed memories first; confirmation is still required before current-memory retrieval.
 
 ## Tables
 
