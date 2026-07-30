@@ -14,6 +14,7 @@
 - Added browser microphone capture, explicit call-state UI, captions, a deterministic mock turn/audio response, end-call processing, and a seeded session review experience.
 - Built product screens for sessions, editable journal, transcript, memory review/approval, temporal graph, graph query, silence receipt, and settings.
 - Reworked the memory map only into an interactive Cytoscape knowledge graph: meaningful node types, directional plain-language relationship labels, click-to-select node detail, connected-edge highlighting, and centre-map navigation.
+- Restored the memory map exactly to its original React Flow implementation after product review. Cytoscape and all later graph-specific UI changes have been removed; no other product area was altered.
 
 ## Ready for technical integration
 
@@ -34,6 +35,7 @@
 - `npm test` — pass (2 frontend fallback tests).
 - Memory-map interaction check — pass: selecting a graph node updates its evidence inspector and highlights connected edge(s), with no browser console errors.
 - Cytoscape canvas smoke check — pass: the selected memory, inspector, and interactive graph canvas render with no browser console errors.
+- Original memory-map restoration — pass: source, styles, and dependency manifests match the original frontend commit; typecheck, lint, tests, and production build pass.
 
 ## Blockers
 
