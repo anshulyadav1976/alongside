@@ -13,6 +13,7 @@
 - Built the visual system, app shell, dashboard, mock client adapter, seeded contract-shaped demo data, and call experience.
 - Added browser microphone capture, explicit call-state UI, captions, a deterministic mock turn/audio response, end-call processing, and a seeded session review experience.
 - Built product screens for sessions, editable journal, transcript, memory review/approval, temporal graph, graph query, silence receipt, and settings.
+- Reworked the memory map only into an interactive React Flow knowledge graph: meaningful node types, directional plain-language relationship labels, click-to-select node detail, and connected-edge highlighting.
 
 ## Ready for technical integration
 
@@ -31,11 +32,12 @@
 - `npm run build` — pass.
 - Browser smoke check — dashboard, graph, and session review rendered without console errors.
 - `npm test` — pass (2 frontend fallback tests).
+- Memory-map interaction check — pass: selecting a graph node updates its evidence inspector and highlights connected edge(s), with no browser console errors.
 
 ## Blockers
 
 - The shared repository started with only a README; there is no `origin/codex/technical-core` branch or backend/API implementation to inspect.
-- Push attempted after this major iteration, but GitHub rejected the configured identity with HTTP 403: it does not have permission to `anshulyadav1976/alongside`. The local branch contains the complete committed implementation.
+- The initial push was rejected with HTTP 403 before collaborator access was granted. The product branch was subsequently pushed successfully.
 
 ## Next action
 
