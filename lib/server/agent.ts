@@ -5,6 +5,7 @@ import { id, now } from "./ids";
 import { listMemories, recordCandidateMemory } from "./memory";
 import { generateResponse, transcribeAudio } from "./ai";
 import { synthesizeSpeech } from "./tts";
+import { safetyLevel, safetyResponse } from "./safety";
 
 export function createCall(db: DatabaseSync = getDatabase()) {
   const env = getEnv();
@@ -32,8 +33,9 @@ export async function processTurn(db: DatabaseSync, sessionId: string, userId: s
   const nextIndex = Number((db.prepare("SELECT COALESCE(MAX(turn_index), -1) AS max_index FROM transcript_turns WHERE session_id = ?").get(sessionId) as { max_index: number }).max_index) + 1;
   db.prepare("INSERT INTO transcript_turns (id, user_id, session_id, turn_index, speaker, text, source, model, created_at) VALUES (?, ?, ?, ?, 'user', ?, ?, ?, ?)").run(userTurnId, userId, sessionId, nextIndex, transcription.text, transcription.source, transcription.source === "openai" ? getEnv().OPENAI_TRANSCRIPTION_MODEL : "demo", now());
   db.prepare("UPDATE sessions SET processing_state = 'thinking', updated_at = ? WHERE id = ?").run(now(), sessionId);
+  const risk = safetyLevel(transcription.text);
   const context = listMemories(db, userId, "current").filter((memory) => memory.reusePermission !== "never_proactive").slice(0, 6).map((memory) => `- ${memory.statement}`).join("\n");
-  const response = await generateResponse(transcription.text, context);
+  const response = risk === "urgent" ? { text: safetyResponse(), source: "demo" as const } : await generateResponse(transcription.text, context);
   const agentTurnId = id("turn");
   db.prepare("INSERT INTO transcript_turns (id, user_id, session_id, turn_index, speaker, text, source, model, created_at) VALUES (?, ?, ?, ?, 'agent', ?, ?, ?, ?)").run(agentTurnId, userId, sessionId, nextIndex + 1, response.text, response.source, response.source === "openai" ? getEnv().OPENAI_PROCESSING_MODEL : "demo", now());
   const speech = await synthesizeSpeech(response.text, agentTurnId);
@@ -50,5 +52,10 @@ async function responseForExistingTurn(db: DatabaseSync, sessionId: string, user
 export function endCall(db: DatabaseSync, sessionId: string, userId: string) {
   const timestamp = now();
   db.prepare("UPDATE sessions SET processing_state = 'call_completed', ended_at = ?, updated_at = ? WHERE id = ? AND user_id = ?").run(timestamp, timestamp, sessionId, userId);
+  const turns = db.prepare("SELECT speaker, text FROM transcript_turns WHERE session_id = ? ORDER BY turn_index").all(sessionId) as Array<{ speaker: string; text: string }>;
+  if (turns.length > 0) {
+    const userText = turns.filter((turn) => turn.speaker === "user").map((turn) => turn.text).join(" ").slice(0, 500);
+    db.prepare("INSERT INTO journal_entries (id, user_id, session_id, title, summary, content_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(session_id) DO UPDATE SET summary = excluded.summary, content_json = excluded.content_json, updated_at = excluded.updated_at").run(id("journal"), userId, sessionId, "A reflection from your call", userText || "A short conversation with Alongside.", JSON.stringify({ importantMoments: userText ? [userText] : [], whatHelped: [], whatDidNotHelp: [], nextSteps: [], candidateMemories: [] }), timestamp, timestamp);
+  }
   return getSession(db, sessionId, userId);
 }

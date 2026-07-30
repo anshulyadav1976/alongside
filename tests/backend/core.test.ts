@@ -5,7 +5,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createDatabase, seedDemo } from "../../lib/server/db";
 import { graphProjection, listMemories, updateMemory } from "../../lib/server/memory";
-import { processTurn } from "../../lib/server/agent";
+import { endCall, processTurn } from "../../lib/server/agent";
+import { safetyLevel } from "../../lib/server/safety";
 
 const paths: string[] = [];
 afterEach(() => { for (const path of paths.splice(0)) rmSync(path, { recursive: true, force: true }); });
@@ -19,5 +20,9 @@ describe("SQLite memory lifecycle", () => {
 });
 
 describe("own-agent fallback", () => {
-  it("creates a transcript and response without provider keys", async () => { const db = fixture(); const sessionId = String((db.prepare("SELECT id FROM sessions WHERE user_id = ? LIMIT 1").get("test-user") as { id: string }).id); db.prepare("UPDATE sessions SET processing_state = 'ready' WHERE id = ?").run(sessionId); const result = await processTurn(db, sessionId, "test-user", new File(["hello"], "voice.webm", { type: "audio/webm" })); assert.ok("data" in result); assert.equal(result.data?.sessionId, sessionId); assert.match(result.data?.assistantText ?? "", /hear you|one small step/i); assert.equal((db.prepare("SELECT COUNT(*) AS count FROM transcript_turns WHERE session_id = ?").get(sessionId) as { count: number }).count, 4); db.close(); });
+  it("creates a transcript, response, and journal without provider keys", async () => { const db = fixture(); const sessionId = String((db.prepare("SELECT id FROM sessions WHERE user_id = ? LIMIT 1").get("test-user") as { id: string }).id); db.prepare("UPDATE sessions SET processing_state = 'ready' WHERE id = ?").run(sessionId); const result = await processTurn(db, sessionId, "test-user", new File(["hello"], "voice.webm", { type: "audio/webm" })); assert.ok("data" in result); assert.equal(result.data?.sessionId, sessionId); assert.match(result.data?.assistantText ?? "", /hear you|one small step/i); assert.equal((db.prepare("SELECT COUNT(*) AS count FROM transcript_turns WHERE session_id = ?").get(sessionId) as { count: number }).count, 4); endCall(db, sessionId, "test-user"); assert.equal((db.prepare("SELECT COUNT(*) AS count FROM journal_entries WHERE session_id = ?").get(sessionId) as { count: number }).count, 1); db.close(); });
+});
+
+describe("safety boundary", () => {
+  it("uses deterministic urgent classification", () => { assert.equal(safetyLevel("I might hurt myself tonight"), "urgent"); assert.equal(safetyLevel("I had a difficult day"), "normal"); });
 });

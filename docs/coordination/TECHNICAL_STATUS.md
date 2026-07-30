@@ -1,7 +1,7 @@
 # Technical status
 
 - **Branch:** `codex/technical-core`
-- **Commit:** runtime foundation in progress
+- **Commit:** safety/journal hardening
 - **Active slice:** `S1-S5-local-mvp`
 - **State:** `IMPLEMENTED_NEEDS_PUSH`
 - **Updated:** 2026-07-30
@@ -14,6 +14,7 @@
 - Next.js app scaffolded with a server-owned agent loop.
 - SQLite seed, memory lifecycle, graph projection, check-in boundary, and deterministic provider fallbacks implemented.
 - Call creation, audio turn, TTS audio retrieval, session, journal, memory, graph, support, intervention, and check-in routes implemented.
+- Deterministic urgent-safety gate and end-call journal persistence added.
 
 ## Ready for product integration
 
@@ -28,7 +29,7 @@
 
 - `npm run typecheck` passed.
 - `npm run lint` passed.
-- `npm test` passed: 4 tests.
+- `npm test` passed: 5 tests.
 - `npm run build` passed.
 
 ## Blockers
@@ -37,7 +38,7 @@
 
 ## Next action
 
-- Commit and push the runtime foundation, then run the live local smoke test.
+- Technical MVP is ready for product integration; run the product surface against the canonical call-turn contract.
 
 ## Request to product agent
 

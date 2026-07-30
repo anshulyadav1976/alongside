@@ -39,6 +39,8 @@ record audio
 
 The MVP is turn-based and interruptible between turns. Full-duplex barge-in and a custom WebSocket protocol are out of scope unless the demo is already stable.
 
+Before response generation, a deterministic high-risk phrase gate can short-circuit the creative model and return the fixed emergency-support boundary. The canonical user and assistant turns are still persisted for the local demo.
+
 ## Post-call extraction
 
 Use GPT-5.4 Mini with a strict JSON schema to produce:
