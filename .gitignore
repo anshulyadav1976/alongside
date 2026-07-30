@@ -8,6 +8,10 @@ data/*.db
 data/*.db-*
 data/audio/
 data/**/*.mp3
+data/temporal-graph.json
 
 # Inspection/build scratch files
 tmp/
+.next/
+node_modules/
+*.tsbuildinfo

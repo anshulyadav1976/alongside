@@ -29,7 +29,6 @@ export type ProcessingState =
   | "active"
   | "call_completed"
   | "webhook_received"
-  | "transcribing"
   | "extracting"
   | "awaiting_user_review"
   | "ready"

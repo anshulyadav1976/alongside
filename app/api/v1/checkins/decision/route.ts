@@ -1,0 +1,5 @@
+import { getDatabase } from "../../../../../lib/server/db";
+import { ok, userId } from "../../../../../lib/server/http";
+import { id, now } from "../../../../../lib/server/ids";
+
+export function POST() { const db = getDatabase(); const uid = userId(); const policy = db.prepare("SELECT * FROM checkin_policies WHERE user_id = ?").get(uid) as Record<string, unknown> | undefined; const enabled = Boolean(policy?.enabled); const reasonCode = enabled ? "POLICY_ELIGIBLE" : "CHECKINS_DISABLED"; const decision = enabled ? "CHECK_IN" : "NO_ACTION"; const reason = enabled ? "The user has opted into check-ins and the policy allows a candidate." : "No proactive check-in is allowed without explicit opt-in."; const result = { decision, reasonCode, reason, evidenceIds: [], earliestAllowedAt: undefined }; db.prepare("INSERT INTO checkin_decisions (id, user_id, decision, reason_code, reason, evidence_ids_json, created_at) VALUES (?, ?, ?, ?, ?, '[]', ?)").run(id("decision"), uid, decision, reasonCode, reason, now()); return ok(result); }

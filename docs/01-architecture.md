@@ -10,7 +10,7 @@ Alongside is a local-first Next.js application with a deliberately small provide
 - **GPT audio transcription** as the preferred post-turn/post-call transcript source, with the provider transcript as an explicit fallback.
 - **ElevenLabs Text-to-Speech only** for spoken assistant replies, streamed from server routes.
 - **Node's built-in SQLite (`node:sqlite`)** for local durable state.
-- **JSON graph projection** generated from SQLite records for React Flow (`@xyflow/react`).
+- **JSON graph projection** generated from SQLite records for React Flow (`@xyflow/react`) and written to `data/temporal-graph.json` for local inspection.
 
 There is no authentication, hosted database, vector search, background queue, or deployment requirement for the hackathon demo.
 
@@ -58,7 +58,7 @@ GPT proposes a journal, upcoming moments, state observations, interventions, and
 ## Memory and graph rules
 
 - SQLite is the source of truth.
-- The graph is a rebuildable JSON projection, never a second independent database.
+- The graph is a rebuildable JSON projection, never a second independent database; SQLite remains canonical.
 - Store valid time and system time separately.
 - Revoked, rejected, expired, or superseded records are excluded from current retrieval.
 - Every graph node and edge carries evidence IDs, source session, explicit/inferred state, confidence, sensitivity, and permission.

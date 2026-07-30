@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS transcript_turns (
   end_ms INTEGER,
   source TEXT NOT NULL CHECK (source IN ('openai', 'elevenlabs_fallback', 'demo')),
   model TEXT,
+  audio_path TEXT,
   created_at TEXT NOT NULL,
   UNIQUE(session_id, turn_index)
 );

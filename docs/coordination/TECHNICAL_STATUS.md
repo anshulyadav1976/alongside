@@ -1,9 +1,9 @@
 # Technical status
 
 - **Branch:** `codex/technical-core`
-- **Commit:** working tree
-- **Active slice:** `S0-foundation`
-- **State:** `IN_PROGRESS`
+- **Commit:** runtime foundation in progress
+- **Active slice:** `S1-S5-local-mvp`
+- **State:** `IMPLEMENTED_NEEDS_PUSH`
 - **Updated:** 2026-07-30
 
 ## Completed
@@ -11,10 +11,14 @@
 - Local SQLite/OpenAI/GPT-5.4 Mini/ElevenLabs-TTS-only architecture documented.
 - Local API contracts and SQLite schema aligned with the own-agent turn pipeline.
 - Technical branch created; no product branch dependency.
+- Next.js app scaffolded with a server-owned agent loop.
+- SQLite seed, memory lifecycle, graph projection, check-in boundary, and deterministic provider fallbacks implemented.
+- Call creation, audio turn, TTS audio retrieval, session, journal, memory, graph, support, intervention, and check-in routes implemented.
 
 ## Ready for product integration
 
 - `/calls`, `/calls/{sessionId}/turn`, `/calls/{sessionId}/end` are the canonical voice contracts.
+- `/memories`, `/graph`, `/graph/query`, `/checkins/decision` are the canonical local data contracts.
 
 ## Contract changes
 
@@ -22,15 +26,18 @@
 
 ## Tests
 
-- Not run yet; implementation follows.
+- `npm run typecheck` passed.
+- `npm run lint` passed.
+- `npm test` passed: 4 tests.
+- `npm run build` passed.
 
 ## Blockers
 
-- None. Provider calls will have deterministic demo fallbacks for local rehearsal.
+- Provider calls have deterministic demo fallbacks for local rehearsal. ElevenLabs voice is available when the local key/voice configuration is present.
 
 ## Next action
 
-- Commit the contract/config slice, push it, then scaffold the server and SQLite foundation.
+- Commit and push the runtime foundation, then run the live local smoke test.
 
 ## Request to product agent
 

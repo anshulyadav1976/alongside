@@ -1,6 +1,6 @@
 # Local SQLite data model
 
-The executable reference schema is in [`contracts/schema.sql`](contracts/schema.sql). SQLite is the only source of truth for the local demo; the graph is derived JSON.
+The executable reference schema is in [`contracts/schema.sql`](contracts/schema.sql). SQLite is the only source of truth for the local demo; the graph is derived JSON written to `data/temporal-graph.json`.
 
 ## Core principles
 

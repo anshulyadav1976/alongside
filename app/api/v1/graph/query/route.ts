@@ -1,0 +1,5 @@
+import { getDatabase } from "../../../../../lib/server/db";
+import { ok, userId } from "../../../../../lib/server/http";
+import { listMemories } from "../../../../../lib/server/memory";
+
+export async function POST(request: Request) { const body = await request.json() as { question?: string; view?: "current" | "history" }; const question = body.question?.trim() ?? ""; const memories = listMemories(getDatabase(), userId(), body.view === "history" ? "history" : "current"); const evidence = memories.filter((memory) => question.toLowerCase().split(/\s+/).some((word) => word.length > 3 && memory.statement.toLowerCase().includes(word))).slice(0, 5); if (!question || evidence.length === 0) return ok({ answer: "I don't have enough recorded evidence to answer that.", facts: [], inferences: [], uncertainty: "No matching approved memory was found.", abstained: true }); return ok({ answer: `Based on what you recorded: ${evidence[0].statement}`, facts: evidence.map((memory) => ({ text: memory.statement, evidenceIds: [memory.id], confidence: memory.confidence })), inferences: [], uncertainty: null, abstained: false }); }

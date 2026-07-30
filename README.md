@@ -77,6 +77,22 @@ The hackathon implementation is a single **Next.js App Router + TypeScript** rep
 
 The model identifiers are environment-configured. Do not scatter model names through application code.
 
+## Run locally
+
+```bash
+npm install
+npm run dev
+```
+
+The local demo uses `DATABASE_PATH=./data/alongside.db`. Keep provider keys in `.env.local`; it is ignored by Git. The backend remains usable without provider keys through deterministic demo fallbacks.
+
+```bash
+npm run typecheck
+npm run lint
+npm test
+npm run build
+```
+
 ## Product boundary
 
 Alongside is a wellbeing and reflection copilot informed by psychological research. It is not a therapist, diagnostic system, emergency service, medical device, or substitute for professional or human support.
